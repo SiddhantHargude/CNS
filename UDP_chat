@@ -1,0 +1,64 @@
+//Server code
+import java.net.*;
+import java.io.*;
+
+public class Server2 {
+    public static void main(String[] args) {
+        byte[] buffer = new byte[3072];
+
+        try (DatagramSocket dsoc = new DatagramSocket(1000);
+             FileOutputStream fos = new FileOutputStream("testudp1.txt")) {
+
+            System.out.println("Server started, waiting for packets...");
+
+            while (true) {
+                DatagramPacket dp = new DatagramPacket(buffer, buffer.length);
+                dsoc.receive(dp);
+
+                // Write the received bytes to file (append)
+                fos.write(dp.getData(), 0, dp.getLength());
+                fos.flush();
+
+                System.out.println("Received packet: " + new String(dp.getData(), 0, dp.getLength()));
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+//Client code
+import java.net.*;
+import java.io.*;
+
+public class Client2 {
+    public static void main(String[] args) {
+        System.out.println("Current working directory: " + System.getProperty("user.dir"));
+
+        byte[] buffer = new byte[1024];
+
+        try (FileInputStream fis = new FileInputStream("testudp1.txt");
+             DatagramSocket dsoc = new DatagramSocket(2000)) {
+
+            int bytesRead = fis.read(buffer);
+            if (bytesRead == -1) {
+                System.out.println("File is empty.");
+                return;
+            }
+
+            InetAddress address = InetAddress.getLocalHost();
+
+            DatagramPacket packet = new DatagramPacket(buffer, bytesRead, address, 1000);
+            dsoc.send(packet);
+
+            System.out.println("Packet sent with " + bytesRead + " bytes.");
+
+        } catch (FileNotFoundException fnfe) {
+            System.err.println("File not found: testudp1.txt");
+            System.err.println("Make sure the file exists in the directory printed above.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
